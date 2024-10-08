@@ -56,6 +56,7 @@ void can_deg(){
   deg3[3] = '\0'; 
   strncpy(deg4, (char*)rxFrame.data + 9, 3); 
   deg4[3] = '\0'; 
+  
   servo_deg1 = atoi(deg1);
   servo_deg2 = atoi(deg2);
   servo_deg3 = atoi(deg3);
