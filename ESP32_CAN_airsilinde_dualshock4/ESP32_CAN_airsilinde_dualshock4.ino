@@ -1,7 +1,29 @@
 #include <PS4Controller.h>
+#include <Arduino.h>
+#include <ESP32-TWAI-CAN.hpp>
+
+#define CAN_TX       21
+#define CAN_RX       22
+
+void send_CAN(int ID, byte value[], int length) {
+  CanFrame obdFrame = { 0 };
+  obdFrame.identifier = ID;
+  obdFrame.extd = 0;
+  obdFrame.data_length_code = length;
+  for (int i = 0; i < length; i++) {
+    obdFrame.data[i] = value[i];
+  }
+  ESP32Can.writeFrame(obdFrame);
+}
 
 void setup() {
+  setCpuFrequencyMhz(160);
   Serial.begin(115200);
+  if (ESP32Can.begin(ESP32Can.convertSpeed(500), CAN_TX, CAN_RX, 10, 10)) {
+    Serial.println("CAN bus started!");
+  } else {
+    Serial.println("CAN bus failed!");
+  }
   PS4.begin();
   Serial.println("Ready.");
   pinMode(32,OUTPUT);//ハンド1 開
@@ -10,8 +32,43 @@ void setup() {
   pinMode(27,OUTPUT);//上下機構2下降
 }
 
+void send_deg_duty(int ID, int deg, int duty_ratio) {
+  char message[7]; // 6桁+null文字
+  snprintf(message, sizeof(message), "%03d%03d", deg, duty_ratio); // "359099" のような文字列を作成
+  // バイト配列に変換
+  byte data[6];
+  for (int i = 0; i < 6; i++) {
+    data[i] = message[i];
+  }
+  send_CAN(ID, data, sizeof(data));// CANメッセージを送信
+}
+
+void send_servo(int ID, int servo_deg1, int servo_deg2, int servo_deg3, int servo_deg4) {
+  char message[13]; // 12桁+null文字
+  snprintf(message, sizeof(message), "%03d%03d%03d%03d", servo_deg1, servo_deg2, servo_deg3, servo_deg4); 
+  // バイト配列に変換
+  byte data[6];
+  for (int i = 0; i < 12; i++) {
+    data[i] = message[i];
+  }
+  send_CAN(ID, data, sizeof(data));// CANメッセージを送信
+}
+
+
 void loop() {
   if (PS4.isConnected()) {
+    int x,y,duty_ratio,deg,servo_deg1,servo_deg2,servo_deg3,servo_deg4;
+    x = PS4.LStickX();
+    y = PS4.LStickY();
+    duty_ratio = sqrt((x * x) + (y * y));
+    if(duty_ratio < 65)duty_ratio = 0;
+    else if(duty_ratio >= 65)duty_ratio = (duty_ratio - 65);
+    deg = -(atan2(-x,-y)*180)/PI;
+    if(deg < 0)deg = 180 + (180 + deg);
+    send_servo(0x122,servo_deg1, servo_deg2, servo_deg3, servo_deg4);
+    send_deg_duty(0x123, deg, duty_ratio);//Unit1
+    send_deg_duty(0x124, deg, duty_ratio);//Unit2
+    send_deg_duty(0x125, deg, duty_ratio);//Unit3
     //マイナスブロック用ハンドを開く
     if(PS4.Up()&&PS4.Down()==0)digitalWrite(32,HIGH);
     else digitalWrite(32,LOW);
