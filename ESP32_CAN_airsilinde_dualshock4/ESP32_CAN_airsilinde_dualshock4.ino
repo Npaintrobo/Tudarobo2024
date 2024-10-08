@@ -58,7 +58,7 @@ void send_servo(int ID, int servo_deg1, int servo_deg2, int servo_deg3, int serv
 void loop() {
   if (PS4.isConnected()) {
     int x_L,y_L,x_R,duty_ratio,deg,deg1,deg2,deg3;
-    int servo_deg1,servo_deg2,servo_deg3,servo_deg4;
+    int servo_deg1 = 180,servo_deg2 = 180,servo_deg3 = 180,servo_deg4 = 180;
     x_L = PS4.LStickX();
     y_L = PS4.LStickY();
     if(PS4.RStickX() > 20 && PS4.RStickX() < -20){
@@ -84,10 +84,10 @@ void loop() {
       deg3 = deg;
     }
 
-    if(PS4.L1())servo_deg1 + 1;
-    if(PS4.R1())servo_deg1 - 1;
-    if(PS4.L2())servo_deg2 + 1;
-    if(PS4.R2())servo_deg2 - 1;
+    if(servo_deg1 <360)if(PS4.L1())servo_deg1 + 1;
+    if(servo_deg2 >0)if(PS4.R1())servo_deg1 - 1;
+    if(servo_deg3 <360)if(PS4.L2())servo_deg2 + 1;
+    if(servo_deg4 >0)if(PS4.R2())servo_deg2 - 1;
 
     send_servo(0x122,servo_deg1, servo_deg2, servo_deg3, servo_deg4);
     send_deg_duty(0x123, deg1, duty_ratio);//Unit1
