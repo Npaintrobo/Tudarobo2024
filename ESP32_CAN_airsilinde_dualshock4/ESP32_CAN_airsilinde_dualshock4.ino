@@ -47,7 +47,7 @@ void send_servo(int ID, int servo_deg1, int servo_deg2, int servo_deg3, int serv
   char message[13]; // 12桁+null文字
   snprintf(message, sizeof(message), "%03d%03d%03d%03d", servo_deg1, servo_deg2, servo_deg3, servo_deg4); 
   // バイト配列に変換
-  byte data[6];
+  byte data[12];
   for (int i = 0; i < 12; i++) {
     data[i] = message[i];
   }
@@ -57,7 +57,8 @@ void send_servo(int ID, int servo_deg1, int servo_deg2, int servo_deg3, int serv
 
 void loop() {
   if (PS4.isConnected()) {
-    int x_L,y_L,x_R,duty_ratio,deg,deg1,deg2,deg3,servo_deg1,servo_deg2,servo_deg3,servo_deg4;
+    int x_L,y_L,x_R,duty_ratio,deg,deg1,deg2,deg3;
+    int servo_deg1,servo_deg2,servo_deg3,servo_deg4;
     x_L = PS4.LStickX();
     y_L = PS4.LStickY();
     if(PS4.RStickX() > 20 && PS4.RStickX() < -20){
@@ -82,6 +83,12 @@ void loop() {
       deg2 = deg;
       deg3 = deg;
     }
+
+    if(PS4.L1())servo_deg1 + 1;
+    if(PS4.R1())servo_deg1 - 1;
+    if(PS4.L2())servo_deg2 + 1;
+    if(PS4.R2())servo_deg2 - 1;
+
     send_servo(0x122,servo_deg1, servo_deg2, servo_deg3, servo_deg4);
     send_deg_duty(0x123, deg1, duty_ratio);//Unit1
     send_deg_duty(0x124, deg2, duty_ratio);//Unit2
