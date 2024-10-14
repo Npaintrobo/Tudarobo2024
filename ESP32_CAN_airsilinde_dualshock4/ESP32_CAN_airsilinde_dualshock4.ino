@@ -37,6 +37,7 @@ void setup() {
 void send_deg_duty(int ID, int deg, int duty_ratio) {
   char message[7]; // 6桁+null文字
   snprintf(message, sizeof(message), "%03d%03d", deg, duty_ratio); // "359099" のような文字列を作成
+  Serial.print(message);
   // バイト配列に変換
   byte data[6];
   for (int i = 0; i < 6; i++) {
@@ -48,7 +49,7 @@ void send_deg_duty(int ID, int deg, int duty_ratio) {
 void send_servo(int ID, int servo_deg1, int servo_deg2) {
   char message1[7]; // 12桁+null文字
   snprintf(message1, sizeof(message1), "%03d%03d", servo_deg1, servo_deg2);
-  Serial.print(message1);
+  //Serial.print(message1);
   // バイト配列に変換
   byte data1[6];
   for (int i = 0; i < 6; i++) {
@@ -86,6 +87,9 @@ void loop() {
       deg2 = deg;
       deg3 = deg;
     }
+
+    duty_ratio = map(duty_ratio, 0 , 77 , 0 , 460);
+    duty_ratio = constrain(duty_ratio, 0, 460);
     
     if(servo_deg1 < 360)if(PS4.L1()==1){servo_deg1 = servo_deg1 + 1;}
     if(servo_deg1 > 0)if(PS4.R1()==1){servo_deg1 = servo_deg1 - 1;}
