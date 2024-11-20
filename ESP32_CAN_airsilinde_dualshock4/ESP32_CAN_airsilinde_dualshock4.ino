@@ -5,7 +5,7 @@
 #define CAN_TX       21
 #define CAN_RX       22
 
-int servo_deg1,servo_deg2,servo_deg3,servo_deg4,wheel_flag;
+int servo_deg1,servo_deg2,servo_deg3,servo_deg4,wheel_flag,arm_duty,arm_flag;
 
 void send_CAN(int ID, byte value[], int length) {
   CanFrame obdFrame = { 0 };
@@ -47,7 +47,7 @@ void send_deg_duty(int ID, int deg, int duty_ratio, int wheel_flag) {
 }
 
 void send_servo(int ID, int servo_deg1, int servo_deg2) {
-  char message1[7]; // 12桁+null文字
+  char message1[7]; // 7桁+null文字
   snprintf(message1, sizeof(message1), "%03d%03d", servo_deg1, servo_deg2);
   //Serial.print(message1);
   // バイト配列に変換
@@ -56,6 +56,16 @@ void send_servo(int ID, int servo_deg1, int servo_deg2) {
     data1[i] = message1[i];
   }
   send_CAN(ID, data1, sizeof(data1));// CANメッセージを送信
+}
+
+void  send_arm(int ID, int arm_duty ,int arm_flag){
+  CanFrame txFrame;
+  txFrame.identifier = ID;
+  txFrame.extd = 0;
+  txFrame.data_length_code = 2;
+  txFrame.data[0] = arm_duty;
+  txFrame.data[1] = arm_flag;
+  ESP32Can.writeFrame(txFrame);
 }
 
 
@@ -98,16 +108,20 @@ void loop() {
     duty_ratio = map(duty_ratio, 0 , 77 , 0 , 460);
     duty_ratio = constrain(duty_ratio, 0, 460);
     
+    /*
     if(servo_deg1 < 360)if(PS4.L1()==1){servo_deg1 = servo_deg1 + 1;}
     if(servo_deg1 > 0)if(PS4.R1()==1){servo_deg1 = servo_deg1 - 1;}
     if(servo_deg2 < 360)if(PS4.L2()==1){servo_deg2 = servo_deg2 + 1;}
     if(servo_deg2 > 0)if(PS4.R2()==1){servo_deg2 = servo_deg2 - 1;}
-    
+    */
+    arm_duty = constrain(arm_duty, 0, 120)
     send_servo(0x122 , servo_deg1, servo_deg2);
     send_deg_duty(0x123, deg1, duty_ratio,wheel_flag);//Unit1
     send_deg_duty(0x124, deg2, duty_ratio,wheel_flag);//Unit2
     send_deg_duty(0x125, deg3, duty_ratio,wheel_flag);//Unit3
+    send_arm(0x126,arm_duty,arm_flag);
     
+    /*
     //マイナスブロック用ハンドを開く
     if(PS4.Up()&&PS4.Down()==0)digitalWrite(32,HIGH);
     else digitalWrite(32,LOW);
@@ -120,6 +134,7 @@ void loop() {
     //プラスブロック用アーム下降
     if(PS4.Triangle()==0&&PS4.Cross())digitalWrite(27,HIGH);
     else digitalWrite(27,LOW);
+    */
     Serial.print(duty_ratio);
     Serial.println();
   }

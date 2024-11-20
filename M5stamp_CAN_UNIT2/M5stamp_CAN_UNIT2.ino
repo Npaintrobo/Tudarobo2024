@@ -17,9 +17,11 @@ const int pwm2_2 = 7; // steering2
 
 int drive;
 int target_angle;
+int wheel_flag;
 
 char drive_c[4];
 char target_angle_c[4];
+char wheel_flag_c[2];
 
 CanFrame rxFrame; 
 
@@ -80,8 +82,12 @@ void loop() {
       strncpy(drive_c, (char*)rxFrame.data + 3, 3); 
       drive_c[3] = '\0'; 
 
+      strncpy(wheel_flag_c, (char*)rxFrame.data + 6, 1); 
+      wheel_flag_c[1] = '\0'; 
+
       target_angle = atoi(target_angle_c); 
       drive = atoi(drive_c); 
+      wheel_flag = atoi(wheel_flag_c);
 
       drive = map(drive, 0, 460, 0, 800);
 
@@ -93,14 +99,16 @@ void loop() {
       // PID制御の出力を計算
       auto [output, drive_flag] = sensor1.computePID(target_angle); 
 
-      if(drive_flag = 0){
+      if(wheel_flag = 0){
         digitalWrite(pwm1_1, HIGH);
         digitalWrite(pwm1_2, LOW);
+        ledcWrite(1, 0);
         ledcWrite(0, drive);
       }
-      if(drive_flag = 1){
+      if(wheel_flag = 1){
         digitalWrite(pwm1_1, LOW);
         digitalWrite(pwm1_2, HIGH);
+        ledcWrite(0, 0);
         ledcWrite(1, drive);
       }
 
@@ -111,10 +119,12 @@ void loop() {
       if (output > 0) {
           digitalWrite(pwm2_1, LOW);
           digitalWrite(pwm2_2, HIGH);
+          ledcWrite(2, 0);
           ledcWrite(3, output);
       } else if (output < 0) {
           digitalWrite(pwm2_1, HIGH);
           digitalWrite(pwm2_2, LOW);
+          ledcWrite(3, 0);
           ledcWrite(2, (output * -1));
       } else {
           digitalWrite(pwm2_1, LOW);
@@ -125,4 +135,5 @@ void loop() {
     }
   }
 }
+
 
