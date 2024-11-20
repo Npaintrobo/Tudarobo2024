@@ -5,7 +5,7 @@
 #define CAN_TX       21
 #define CAN_RX       22
 
-int servo_deg1,servo_deg2,servo_deg3,servo_deg4;
+int servo_deg1,servo_deg2,servo_deg3,servo_deg4,wheel_flag;
 
 void send_CAN(int ID, byte value[], int length) {
   CanFrame obdFrame = { 0 };
@@ -34,13 +34,13 @@ void setup() {
   pinMode(27,OUTPUT);//上下機構2下降
 }
 
-void send_deg_duty(int ID, int deg, int duty_ratio) {
-  char message[7]; // 6桁+null文字
-  snprintf(message, sizeof(message), "%03d%03d", deg, duty_ratio); // "359099" のような文字列を作成
+void send_deg_duty(int ID, int deg, int duty_ratio, int wheel_flag) {
+  char message[8]; // 6桁+null文字
+  snprintf(message, sizeof(message), "%03d%03d%d", deg, duty_ratio,wheel_flag); // "359099" のような文字列を作成
   Serial.print(message);
   // バイト配列に変換
-  byte data[6];
-  for (int i = 0; i < 6; i++) {
+  byte data[7];
+  for (int i = 0; i < 7; i++) {
     data[i] = message[i];
   }
   send_CAN(ID, data, sizeof(data));// CANメッセージを送信
@@ -72,6 +72,8 @@ void loop() {
     Serial.println(PS4.data.button.r1 > 30);
     if(PS4.data.button.r1){
       duty_ratio = sqrt((x_L * x_L) + (y_L * y_L));
+      if(y_L > 0)wheel_flag = 0;
+      if(y_L < 0)wheel_flag = 1;
       if(duty_ratio < 65)duty_ratio = 0;
       else if(duty_ratio >= 65)duty_ratio = (duty_ratio - 65);
       deg1 = 0;
@@ -81,6 +83,8 @@ void loop() {
     else{
       //全方向移動
       duty_ratio = sqrt((x_L * x_L) + (y_L * y_L));
+      if(y_L > 0)wheel_flag = 0;
+      if(y_L < 0)wheel_flag = 1;
       if(duty_ratio < 65)duty_ratio = 0;
       else if(duty_ratio >= 65)duty_ratio = (duty_ratio - 65);
       deg = -(atan2(-x_R,-y_R)*180)/PI;
@@ -100,9 +104,9 @@ void loop() {
     if(servo_deg2 > 0)if(PS4.R2()==1){servo_deg2 = servo_deg2 - 1;}
     
     send_servo(0x122 , servo_deg1, servo_deg2);
-    send_deg_duty(0x123, deg1, duty_ratio);//Unit1
-    send_deg_duty(0x124, deg2, duty_ratio);//Unit2
-    send_deg_duty(0x125, deg3, duty_ratio);//Unit3
+    send_deg_duty(0x123, deg1, duty_ratio,wheel_flag);//Unit1
+    send_deg_duty(0x124, deg2, duty_ratio,wheel_flag);//Unit2
+    send_deg_duty(0x125, deg3, duty_ratio,wheel_flag);//Unit3
     
     //マイナスブロック用ハンドを開く
     if(PS4.Up()&&PS4.Down()==0)digitalWrite(32,HIGH);
