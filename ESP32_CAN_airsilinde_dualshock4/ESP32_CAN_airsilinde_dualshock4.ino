@@ -61,28 +61,31 @@ void send_servo(int ID, int servo_deg1, int servo_deg2) {
 
 void loop() {
   if (PS4.isConnected()) {
-    int x_L,y_L,x_R,duty_ratio,deg,deg1,deg2,deg3;
+    int x_L,y_L,x_R,y_R,duty_ratio,deg,deg1,deg2,deg3;
     
     x_L = PS4.LStickX();
     y_L = PS4.LStickY();
-    if(PS4.RStickX() > 20 && PS4.RStickX() < -20){
-      //旋回移動
-      x_R = PS4.RStickX();
-      duty_ratio = abs(x_R);
-      if(x_R >= 0)deg1 = 0;
-      else deg1 = 360;
-      if(x_R >= 0)deg1 = 60;
-      else deg1 = 120;
-      if(x_R >= 0)deg1 = 120;
-      else deg1 = 240;
+    x_R = PS4.RStickX();
+    y_R = PS4.RStickY();
+
+
+    Serial.println(PS4.data.button.r1 > 30);
+    if(PS4.data.button.r1){
+      duty_ratio = sqrt((x_L * x_L) + (y_L * y_L));
+      if(duty_ratio < 65)duty_ratio = 0;
+      else if(duty_ratio >= 65)duty_ratio = (duty_ratio - 65);
+      deg1 = 0;
+      deg2 = 120;
+      deg3 = 240;
     }
     else{
       //全方向移動
       duty_ratio = sqrt((x_L * x_L) + (y_L * y_L));
       if(duty_ratio < 65)duty_ratio = 0;
       else if(duty_ratio >= 65)duty_ratio = (duty_ratio - 65);
-      deg = -(atan2(-x_L,-y_L)*180)/PI;
+      deg = -(atan2(-x_R,-y_R)*180)/PI;
       if(deg < 0)deg = 180 + (180 + deg);
+      if(deg == 360)deg = 0;
       deg1 = deg;
       deg2 = deg;
       deg3 = deg;
@@ -113,7 +116,7 @@ void loop() {
     //プラスブロック用アーム下降
     if(PS4.Triangle()==0&&PS4.Cross())digitalWrite(27,HIGH);
     else digitalWrite(27,LOW);
-    Serial.print("hai");
+    Serial.print(duty_ratio);
     Serial.println();
   }
   

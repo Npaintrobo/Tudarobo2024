@@ -13,8 +13,8 @@ Servo servo2;
 
 CanFrame rxFrame; 
 
-const int servo1_pin = 32;
-const int servo2_pin = 33;
+const int servo1_pin = 16;
+const int servo2_pin = 4;
 
 int servo_deg1 = 180, servo_deg2 = 180;
 
