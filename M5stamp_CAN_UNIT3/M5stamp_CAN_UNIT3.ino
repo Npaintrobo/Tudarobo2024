@@ -84,7 +84,7 @@ void loop() {
       drive = atoi(drive_c); 
 
       drive = map(drive, 0, 460, 0, 800);
-      target_angle = map(target_angle,0,360,360,0);
+      //target_angle = map(target_angle,0,360,360,0);
       if(target_angle == 360)target_angle = 0;
       double x = sensor1.getAngle();
       USBSerial.print("Target Angle: ");
@@ -97,12 +97,12 @@ void loop() {
       // PID制御の出力を計算
       auto [output, drive_flag] = sensor1.computePID(target_angle); 
 
-      if(drive_flag = 0){
+      if(drive_flag = 1){
         digitalWrite(pwm1_1, HIGH);
         digitalWrite(pwm1_2, LOW);
         ledcWrite(0, drive);
       }
-      if(drive_flag = 1){
+      if(drive_flag = 0){
         digitalWrite(pwm1_1, LOW);
         digitalWrite(pwm1_2, HIGH);
         ledcWrite(1, drive);
